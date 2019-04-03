@@ -5,6 +5,14 @@
 
 Use vault server in development mode in tests, from python
 
+## Installation:
+
+Install with pip
+
+``` shell
+pip3 install --user vault_dev
+```
+
 ## Usage:
 
 ```python
@@ -21,4 +29,12 @@ with vault_dev.server(verbose=True) as server:
 # Connection made
 # Configuring old-style kv engine at /secret
 # Stopping vault server
+```
+
+## Publish to pypi
+
+```shell
+python3 setup.py sdist bdist_wheel
+python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
 ```
