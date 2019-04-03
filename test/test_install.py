@@ -24,8 +24,13 @@ def test_vault_download():
         assert os.path.exists(p)
 
 
-def test_dev_directory_does_not_change():
-    p1 = vault_dev_directory()
-    p2 = vault_dev_directory()
-    assert str(p1) == str(p2)
-    assert repr(p1) == repr(p2)
+def test_cleanup():
+    assert vault_dev_exe.exists()
+    path = vault_dev_exe().vault()
+    tmp = path + ".bak"
+    shutil.copy(path, tmp)
+    vault_dev_exe().cleanup()
+    assert not os.path.exists(path)
+    assert not vault_dev_exe().exists()
+    shutil.copy(tmp, path)
+    assert vault_dev_exe().exists()

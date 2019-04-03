@@ -11,30 +11,30 @@ from vault_dev.utils import find_executable
 def ensure_installed():
     if not shutil.which("vault"):
         print("Did not find system vault, installing one for tests")
-        install()
+        vault_dev_exe().install()
 
 
 def cleanup():
-    if vault_dev_directory.path and os.path.exists(vault_dev_directory.path):
-        print("\nCleaning up the vault directory")
-        shutil.rmtree(vault_dev_directory.path)
-        vault_dev_directory.path = None
+    vault_dev_exe().cleanup()
 
 
+## Order of things:
+##
+## 1. given path
+## 2. vault on the system path
+## 3. vault installed by this package
+## 4. error
 def vault_path(path):
     try:
         vault = find_executable("vault", path)
     except OSError as e:
-        vault_exe = vault_exe_filename(vault_platform())
-        vault = "{}/{}".format(vault_dev_directory(), vault_exe)
-        if not os.path.exists(vault):
+        vault = vault_dev_exe.vault()
+        if not vault:
             raise e
     return vault
 
 
-def install(dest=None, version="1.0.0", platform=None):
-    if not dest:
-        dest = vault_dev_directory().path
+def install(dest, version="1.0.0", platform=None):
     return vault_download(dest, version, platform or vault_platform())
 
 
@@ -69,10 +69,29 @@ def vault_download(dest, version, platform):
     return dest_bin
 
 
-class vault_dev_directory:
+class vault_dev_exe:
     path = None
+    exe = None
     def __init__(self):
         if not self.path:
-            vault_dev_directory.path = tempfile.TemporaryDirectory().name
-    def __repr__(self):
-        return str(self.path)
+            tmp = tempfile.TemporaryDirectory()
+            exe = vault_exe_filename(vault_platform())
+            vault_dev_exe.path = tmp
+            vault_dev_exe.exe = "{}/{}".format(tmp.name, exe)
+
+    def cleanup(self):
+        p = vault_dev_exe.exe
+        if os.path.exists(p):
+            print("Cleaning up the vault directory - removing {}".format(p))
+            os.remove(p)
+
+    def install(self):
+        return install(self.path.name)
+
+    @staticmethod
+    def exists():
+        return vault_dev_exe.exe and os.path.exists(vault_dev_exe.exe)
+
+    @staticmethod
+    def vault():
+        return vault_dev_exe.exe if vault_dev_exe.exists() else None
