@@ -94,17 +94,16 @@ class server:
 class VaultDevServerError(Exception):
     def __init__(self, message, process):
         self.code = process.poll()
+        if self.code:
+            status = "Process exited with code {}".format(self.code)
+        else:
+            status = "Process is still running"
         if not self.code:
             print("Killing vault server process")
             process.kill()
             self.code = process.wait()
         self.stdout = read_all_lines(process.stdout, ">> ")
         self.stderr = read_all_lines(process.stderr, ">> ")
-
-        if self.code:
-            status = "Process exited with code {}".format(self.code)
-        else:
-            status = "Process is still running"
         out = self.stdout or "(none)"
         err = self.stderr or "(none)"
         self.msg = message
