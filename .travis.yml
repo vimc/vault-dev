@@ -1,0 +1,12 @@
+language: python
+python: 3.5
+
+install:
+  - pip3 install codecov
+
+script:
+  - pip3 install -r requirements.txt
+  - coverage run --source=orderly_web setup.py test
+
+after_success:
+  - codecov
