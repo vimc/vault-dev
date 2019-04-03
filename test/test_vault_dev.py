@@ -1,9 +1,9 @@
+import gc
 import socket
 import pytest
 
 import vault_dev
 from vault_dev.utils import *
-
 
 def test_server_basic():
     s = vault_dev.server()
@@ -60,3 +60,13 @@ def test_verbose_mode(capsys):
 def test_restart_is_not_an_error():
     with vault_dev.server() as s:
         assert s.start() is None
+
+
+def test_cleanup_on_gc():
+    def f():
+        s = vault_dev.server()
+        s.start()
+        return s.process
+    p = f()
+    gc.collect()
+    assert p.poll() < 0

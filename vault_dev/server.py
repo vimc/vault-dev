@@ -31,10 +31,12 @@ class server:
         self._wait_until_active(timeout, poll)
         self._enable_kv1()
 
-    def stop(self):
+    def stop(self, wait=True):
         self._message("Stopping vault server")
-        self.process.kill()
-        self.process.wait()
+        if self.is_running():
+            self.process.kill()
+            if wait:
+                self.process.wait()
 
     def client(self):
         # See https://github.com/hvac/hvac/issues/421
@@ -51,6 +53,9 @@ class server:
 
     def __exit__(self, type, value, traceback):
         self.stop()
+
+    def __del__(self):
+        self.stop(False)
 
     def is_running(self):
         return self.process and not self.process.poll()
