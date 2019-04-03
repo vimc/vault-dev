@@ -11,7 +11,7 @@ def test_server_basic():
     s.start()
     assert s.is_running()
     cl = s.client()
-    ## check that vault came up ok and that the v1 key-value store works
+    # check that vault came up ok and that the v1 key-value store works
     cl.write("secret/foo", a="b")
     assert cl.read("secret/foo")["data"]["a"] == "b"
     s.stop()
@@ -36,7 +36,7 @@ def test_failure_to_start():
             assert e.code is not None
 
 
-def test_faiure_after_start():
+def test_failure_after_start():
     with vault_dev.server() as s:
         s.start()
         s.token = "root"

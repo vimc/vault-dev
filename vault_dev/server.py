@@ -7,23 +7,25 @@ import uuid
 import hvac
 import requests
 
-from vault_dev.utils import find_free_port, read_all_lines, drop_envvar
+from vault_dev.utils import *
+from vault_dev.install import vault_path
 
 
 class server:
-    def __init__(self, port=None, verbose=False, debug=False):
+    def __init__(self, port=None, verbose=False, debug=False, vault=None):
+        self.process = None
+        self.verbose = verbose or debug
+        self.vault = vault_path(vault)
         self.port = port or find_free_port()
         self.token = str(uuid.uuid4())
         self.debug = debug
-        self.verbose = verbose or debug
-        self.process = None
 
     def start(self, timeout=5, poll=0.1):
         if self.is_running():
             self._message("Vault server already started")
             return
         self._message("Starting vault server on port {}".format(self.port))
-        args = ["vault", "server", "-dev",
+        args = [self.vault, "server", "-dev",
                 "-dev-listen-address", "localhost:{}".format(self.port),
                 "-dev-root-token-id", self.token]
         output = None if self.debug else subprocess.PIPE

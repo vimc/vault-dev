@@ -1,5 +1,6 @@
 import errno
 import os
+import shutil
 import socket
 
 
@@ -28,3 +29,15 @@ def read_all_lines(con, prefix=""):
 def drop_envvar(name):
     if name in os.environ:
         del os.environ[name]
+
+
+def find_executable(name, path):
+    if path:
+        if not os.path.exists(path):
+            raise Exception("Path '{}' does not exist".format(path))
+        path = os.path.abspath(path)
+    else:
+        path = shutil.which(name)
+        if not path:
+            raise OSError("Executable '{}' not found on path".format(name))
+    return path
