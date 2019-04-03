@@ -1,5 +1,4 @@
 import math
-import os
 import socket
 import subprocess
 import time
@@ -8,13 +7,12 @@ import uuid
 import hvac
 import requests
 
-from vault_dev.utils import find_free_port
+from vault_dev.utils import find_free_port, read_all_lines, drop_envvar
 
 
 class server:
     def __init__(self, port=None, verbose=False, debug=False):
         self.port = port or find_free_port()
-        self.addr = "http://localhost:{}".format(self.port)
         self.token = str(uuid.uuid4())
         self.debug = debug
         self.verbose = verbose or debug
@@ -40,11 +38,10 @@ class server:
 
     def client(self):
         # See https://github.com/hvac/hvac/issues/421
-        if "VAULT_ADDR" in os.environ:
-            del os.environ["VAULT_ADDR"]
-        if "VAULT_TOKEN" in os.environ:
-            del os.environ["VAULT_TOKEN"]
-        cl = hvac.Client(url=self.addr, token=self.token)
+        drop_envvar("VAULT_ADDR")
+        drop_envvar("VAULT_TOKEN")
+        url = "http://localhost:{}".format(self.port)
+        cl = hvac.Client(url=url, token=self.token)
         assert cl.is_authenticated()
         return cl
 
@@ -62,18 +59,17 @@ class server:
         self._message("Waiting for server to become active")
         for i in range(math.ceil(timeout / poll)):
             if not self.is_running():
-                self._process_output()
-                raise Exception("Vault process has terminated")
+                raise VaultDevServerError("Vault process has terminated",
+                                          self.process)
             try:
                 cl = self.client()
                 if cl.sys.is_initialized():
                     self._message("\nConnection made")
                     return
             except:
-                self._message(".", end="")
+                self._message(".", end="", flush=True)
                 time.sleep(poll)
-        # self._process_output()
-        raise Exception("Vault did not start in time")
+        raise VaultDevServerError("Vault did not start in time", self.process)
 
     def _enable_kv1(self):
         self._message("Configuring old-style kv engine at /secret")
@@ -87,7 +83,24 @@ class server:
         if self.verbose:
             print(txt, **kwargs)
 
-    def _process_output(self):
-        out = self.process.stdout.read().decode("UTF-8") or "(none)"
-        err = self.process.stderr.read().decode("UTF-8") or "(none)"
-        print("\nstdout:\n{}\nstderr:\n{}\n".format(out, err))
+
+class VaultDevServerError(Exception):
+    def __init__(self, message, process):
+        self.message = message
+        self.code = process.poll()
+        if not self.code:
+            print("Killing vault server process")
+            process.kill()
+            self.code = process.wait()
+        self.stdout = read_all_lines(process.stdout, ">> ")
+        self.stderr = read_all_lines(process.stderr, ">> ")
+
+    def __str__(self):
+        if self.code:
+            status = "Process exited with code {}".format(self.code)
+        else:
+            status = "Process is still running"
+        out = self.stdout or "(none)"
+        err = self.stderr or "(none)"
+        return "{}\n{}\nstdout:\n{}\nstderr:\n{}".format(
+            self.message, status, out, err)

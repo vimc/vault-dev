@@ -1,5 +1,6 @@
-from vault_dev.server import server
+from vault_dev.server import server, VaultDevServerError
 
 __all__ = [
-    server
+    server,
+    VaultDevServerError
 ]

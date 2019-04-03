@@ -1,5 +1,6 @@
-import socket
 import errno
+import os
+import socket
 
 
 def find_free_port():
@@ -14,11 +15,16 @@ def find_free_port():
         return s.getsockname()[1]
 
 
-def port_is_in_use(port):
-    with socket.socket() as s:
-        try:
-            s.bind(("127.0.0.1", port))
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            return False
-        except socket.error as e:
-            return e.errno == errno.EADDRINUSE
+def read_all_lines(con, prefix=""):
+    output = []
+    while True:
+        d = con.readline()
+        if not d:
+            break
+        output.append(prefix + d.decode("UTF-8"))
+    return "".join(output)
+
+
+def drop_envvar(name):
+    if name in os.environ:
+        del os.environ[name]
