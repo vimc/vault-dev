@@ -22,15 +22,13 @@ def cleanup():
 ##
 ## 1. given path
 ## 2. vault on the system path
-## 3. vault installed by this package
+## 3. vault installed by our package
 ## 4. error
 def vault_path(path):
     try:
         vault = find_executable("vault", path)
     except OSError as e:
-        vault = vault_dev_exe.vault()
-        if not vault:
-            raise e
+        vault = vault_dev_exe.vault(True)
     return vault
 
 
@@ -93,5 +91,10 @@ class vault_dev_exe:
         return vault_dev_exe.exe and os.path.exists(vault_dev_exe.exe)
 
     @staticmethod
-    def vault():
-        return vault_dev_exe.exe if vault_dev_exe.exists() else None
+    def vault(required):
+        if vault_dev_exe.exists():
+            return vault_dev_exe.exe
+        elif not required:
+            return None
+        else:
+            raise Exception("No vault found")

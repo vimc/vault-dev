@@ -32,8 +32,10 @@ def test_failure_to_start():
         server = vault_dev.server(port)
         with pytest.raises(vault_dev.VaultDevServerError) as e:
             server.start()
-            assert e.message == "Vault process has terminated"
+            assert e.msg == "Vault process has terminated"
             assert e.code is not None
+            assert e.msg in str(e.value)
+            assert e.stdout in str(e.value)
 
 
 def test_failure_after_start():
@@ -42,7 +44,7 @@ def test_failure_after_start():
         s.token = "root"
         with pytest.raises(vault_dev.VaultDevServerError) as e:
             s._wait_until_active(0.5, 0.1)
-            assert e.message == "Vault did not start in time"
+            assert e.msg == "Vault did not start in time"
             assert e.code is None
             assert e.stdout[0].startswith(">> ")
 
