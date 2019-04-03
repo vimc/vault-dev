@@ -1,5 +1,8 @@
 ## vault-dev
 
+[![Build Status](https://travis-ci.org/vimc/vault-dev.svg?branch=master)](https://travis-ci.org/vimc/vault-dev)
+[![codecov.io](https://codecov.io/github/vimc/vault-dev/coverage.svg?branch=master)](https://codecov.io/github/vimc/vault-dev?branch=master)
+
 Use vault server in development mode in tests, from python
 
 ## Usage:
