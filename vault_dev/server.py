@@ -44,10 +44,12 @@ class server:
         # See https://github.com/hvac/hvac/issues/421
         drop_envvar("VAULT_ADDR")
         drop_envvar("VAULT_TOKEN")
-        url = "http://localhost:{}".format(self.port)
-        cl = hvac.Client(url=url, token=self.token)
+        cl = hvac.Client(url=self.url(), token=self.token)
         assert cl.is_authenticated()
         return cl
+
+    def url(self):
+        return "http://localhost:{}".format(self.port)
 
     def __enter__(self):
         self.start()

@@ -10,6 +10,7 @@ def test_server_basic():
     assert not s.is_running()
     s.start()
     assert s.is_running()
+    assert s.url() == "http://localhost:{}".format(s.port)
     cl = s.client()
     # check that vault came up ok and that the v1 key-value store works
     cl.write("secret/foo", a="b")

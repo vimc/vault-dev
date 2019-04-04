@@ -4,7 +4,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(name="vault_dev",
-      version="0.0.1",
+      version="0.0.2",
       description="Run vault in dev mode from python scripts",
       long_description=long_description,
       classifiers=[
