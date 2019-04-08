@@ -20,28 +20,13 @@ def test_vault_download_skips_existing_file():
 
 
 def test_vault_download():
-    with tempfile.TemporaryDirectory() as path:
-        p = install(path)
-        assert os.path.exists(p)
-
-
-def test_cleanup():
-    assert vault_dev_exe.exists()
-    path = vault_dev_exe().vault(True)
-    tmp = path + ".bak"
-    shutil.copy(path, tmp)
-    cleanup()
-    assert not os.path.exists(path)
-    assert not vault_dev_exe().exists()
-    shutil.copy(tmp, path)
-    assert vault_dev_exe().exists()
+    v = VaultDevExe()
+    p = v.install()
+    assert os.path.exists(p)
+    assert v.vault() == p
 
 
 def test_error_with_no_suitable_vault():
-    p = vault_dev_exe.exe
-    vault_dev_exe.exe = "vault_missing"
-    assert vault_dev_exe.vault(False) is None
+    v = VaultDevExe()
     with pytest.raises(Exception, match="No vault found"):
-        vault_dev_exe.vault(True)
-    vault_dev_exe.exe = p
-    assert vault_dev_exe.vault(True) == p
+        v.vault()

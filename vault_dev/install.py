@@ -1,3 +1,14 @@
+## This whole file struggles with the problem of installing a global
+## resource that is somewhat expensive (a vault binary, needed for
+## installing tests) and we want to just use a system binary if it's
+## already found.
+##
+## The only entrypoint that other packages need to be concerned with
+## is "ensure_installed()" which can be run with no arguments and
+## ensures that a suitable vault binary is installed.
+##
+## This package then uses the "vault_path()" function to get the path
+## to either the system vault or the one that was installed.
 import os
 import platform
 import requests
@@ -5,35 +16,18 @@ import shutil
 import tempfile
 import zipfile
 
-from vault_dev.utils import find_executable
-
 
 def ensure_installed():
     if not shutil.which("vault"):
         print("Did not find system vault, installing one for tests")
-        vault_dev_exe().install()
+        global_vault_dev_exe.install()
 
 
-def cleanup():
-    vault_dev_exe().cleanup()
-
-
-## Order of things:
-##
-## 1. given path
-## 2. vault on the system path
-## 3. vault installed by our package
-## 4. error
-def vault_path(path):
-    try:
-        vault = find_executable("vault", path)
-    except OSError as e:
-        vault = vault_dev_exe.vault(True)
+def vault_path():
+    vault = shutil.which("vault")
+    if not vault:
+        vault = global_vault_dev_exe.vault()
     return vault
-
-
-def install(dest, version="1.0.0", platform=None):
-    return vault_download(dest, version, platform or vault_platform())
 
 
 def vault_exe_filename(platform):
@@ -67,34 +61,29 @@ def vault_download(dest, version, platform):
     return dest_bin
 
 
-class vault_dev_exe:
+class VaultDevExe:
     path = None
     exe = None
     def __init__(self):
         if not self.path:
             tmp = tempfile.TemporaryDirectory()
             exe = vault_exe_filename(vault_platform())
-            vault_dev_exe.path = tmp
-            vault_dev_exe.exe = "{}/{}".format(tmp.name, exe)
-
-    def cleanup(self):
-        p = vault_dev_exe.exe
-        if os.path.exists(p):
-            print("Cleaning up the vault directory - removing {}".format(p))
-            os.remove(p)
+            self.path = tmp
+            self.exe = "{}/{}".format(tmp.name, exe)
 
     def install(self):
-        return install(self.path.name)
+        return vault_download(self.path.name, "1.0.0", vault_platform())
 
-    @staticmethod
-    def exists():
-        return vault_dev_exe.exe and os.path.exists(vault_dev_exe.exe)
+    def exists(self):
+        return self.exe and os.path.exists(self.exe)
 
-    @staticmethod
-    def vault(required):
-        if vault_dev_exe.exists():
-            return vault_dev_exe.exe
-        elif not required:
-            return None
+    def vault(self):
+        if self.exists():
+            return self.exe
         else:
             raise Exception("No vault found")
+
+
+# Package/module global used so that we only install vault once per
+# session.
+global_vault_dev_exe = VaultDevExe()

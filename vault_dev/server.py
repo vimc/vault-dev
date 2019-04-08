@@ -12,10 +12,10 @@ from vault_dev.install import vault_path
 
 
 class server:
-    def __init__(self, port=None, verbose=False, debug=False, vault=None):
+    def __init__(self, port=None, verbose=False, debug=False):
         self.process = None
         self.verbose = verbose or debug
-        self.vault = vault_path(vault)
+        self.vault = vault_path()
         self.port = port or find_free_port()
         self.token = str(uuid.uuid4())
         self.debug = debug
