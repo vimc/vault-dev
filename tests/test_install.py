@@ -1,7 +1,15 @@
-import pytest
+import os
 import tempfile
 
-from vault_dev.install import *
+import pytest
+
+from vault_dev.install import (
+    VaultDevExe,
+    vault_download,
+    vault_exe_filename,
+    vault_platform,
+)
+
 
 def test_vault_exe_name_correct():
     assert vault_exe_filename("windows") == "vault.exe"
@@ -13,7 +21,7 @@ def test_vault_download_skips_existing_file():
     platform = vault_platform()
     version = "1.0.0"
     with tempfile.TemporaryDirectory() as dest:
-        p = "{}/{}".format(dest, vault_exe_filename(platform))
+        p = f"{dest}/{vault_exe_filename(platform)}"
         open(p, "a").close()
         assert vault_download(dest, version, platform) == p
         assert os.path.getsize(p) == 0

@@ -1,13 +1,11 @@
-import errno
 import os
-import shutil
 import socket
 
 
 def find_free_port():
     with socket.socket() as s:
         # Let the OS pick a random free port on our machine
-        s.bind(('localhost', 0))
+        s.bind(("localhost", 0))
         # Then mark this port as immediately ready for reuse - see
         # https://docs.python.org/3.5/library/socket.html and search
         # for SO_REUSEADDR

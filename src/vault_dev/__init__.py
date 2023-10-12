@@ -1,8 +1,4 @@
-from vault_dev.server import server, VaultDevServerError
 from vault_dev.install import ensure_installed
+from vault_dev.server import VaultDevServerError, Server
 
-__all__ = [
-    ensure_installed,
-    server,
-    VaultDevServerError
-]
+__all__ = ["ensure_installed", "Server", "VaultDevServerError"]
