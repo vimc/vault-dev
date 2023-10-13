@@ -4,6 +4,7 @@ import socket
 import pytest
 
 import vault_dev
+
 vault_dev.ensure_installed()
 
 
