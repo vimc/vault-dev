@@ -4,6 +4,7 @@ import socket
 import pytest
 
 import vault_dev
+vault_dev.ensure_installed()
 
 
 def test_server_basic():
@@ -70,4 +71,5 @@ def test_cleanup_on_gc():
 
     f()
     gc.collect()
+    # This used to return true, not anymore and no idea why...
     # assert p.poll() < 0
