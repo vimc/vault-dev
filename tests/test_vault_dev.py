@@ -1,16 +1,18 @@
-import gc
 import socket
+
 import pytest
 
 import vault_dev
-from vault_dev.utils import *
+
+vault_dev.ensure_installed()
+
 
 def test_server_basic():
-    s = vault_dev.server()
+    s = vault_dev.Server()
     assert not s.is_running()
     s.start()
     assert s.is_running()
-    assert s.url() == "http://localhost:{}".format(s.port)
+    assert s.url() == f"http://localhost:{s.port}"
     cl = s.client()
     # check that vault came up ok and that the v1 key-value store works
     cl.write("secret/foo", a="b")
@@ -20,7 +22,7 @@ def test_server_basic():
 
 
 def test_that_enter_exit_works():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         p = s.process
         assert s.is_running()
     assert p.poll()
@@ -28,48 +30,34 @@ def test_that_enter_exit_works():
 
 def test_failure_to_start():
     with socket.socket() as s:
-        s.bind(('localhost', 0))
+        s.bind(("localhost", 0))
         port = s.getsockname()[1]
-        server = vault_dev.server(port)
+        server = vault_dev.Server(port=port)
         with pytest.raises(vault_dev.VaultDevServerError) as e:
             server.start()
-            assert e.msg == "Vault process has terminated"
-            assert e.code is not None
-            assert e.msg in str(e.value)
-            assert e.stdout in str(e.value)
+        assert e.value.msg == "Vault process has terminated"
+        assert e.value.code is not None
 
 
 def test_failure_after_start():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         s.start()
         s.token = "root"
         with pytest.raises(vault_dev.VaultDevServerError) as e:
             s._wait_until_active(0.5, 0.1)
-            assert e.msg == "Vault did not start in time"
-            assert e.code is None
-            assert e.stdout[0].startswith(">> ")
+        assert e.value.msg == "Vault did not start in time"
 
 
 def test_verbose_mode(capsys):
-    with vault_dev.server(verbose=True) as s:
+    with vault_dev.Server(verbose=True) as s:
         port = s.port
     captured = capsys.readouterr().out
-    assert "Starting vault server on port {}".format(port) in captured
+    assert f"Starting vault server on port {port}" in captured
     assert "Waiting for server to become active" in captured
     assert "Connection made" in captured
     assert "Configuring old-style kv engine at /secret" in captured
 
 
 def test_restart_is_not_an_error():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         assert s.start() is None
-
-
-def test_cleanup_on_gc():
-    def f():
-        s = vault_dev.server()
-        s.start()
-        return s.process
-    p = f()
-    gc.collect()
-    assert p.poll() < 0

@@ -1,7 +1,7 @@
-## vault-dev
+# vault-dev
 
-[![Build Status](https://travis-ci.org/vimc/vault-dev.svg?branch=master)](https://travis-ci.org/vimc/vault-dev)
-[![codecov.io](https://codecov.io/github/vimc/vault-dev/coverage.svg?branch=master)](https://codecov.io/github/vimc/vault-dev?branch=master)
+[![PyPI - Version](https://img.shields.io/pypi/v/vault-dev.svg)](https://pypi.org/project/vault-dev)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/vault-dev.svg)](https://pypi.org/project/vault-dev)
 
 Use vault server in development mode in tests, from python
 
@@ -31,10 +31,6 @@ with vault_dev.server(verbose=True) as server:
 # Stopping vault server
 ```
 
-## Publish to pypi
+## License
 
-```shell
-python3 setup.py sdist bdist_wheel
-python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-
-```
+`vault-dev` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.

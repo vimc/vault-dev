@@ -1,9 +1,7 @@
 import os
-import pytest
-import shutil
-import tempfile
 
-from vault_dev.utils import *
+from vault_dev.utils import drop_envvar
+
 
 def test_drop_envvar_removes_envvar():
     name = "VAULT_DEV_TEST_VAR"
