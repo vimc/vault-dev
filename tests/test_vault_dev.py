@@ -1,3 +1,4 @@
+import os
 import socket
 
 import pytest
@@ -61,3 +62,20 @@ def test_verbose_mode(capsys):
 def test_restart_is_not_an_error():
     with vault_dev.Server() as s:
         assert s.start() is None
+
+
+def test_can_export_token_when_present():
+    try:
+        os.environ["VAULT_TOKEN"] = "previous"
+        with vault_dev.Server(export_token=True) as s:
+            assert os.environ["VAULT_TOKEN"] == s.token
+        assert os.environ["VAULT_TOKEN"] == "previous"
+    finally:
+        del os.environ["VAULT_TOKEN"]
+
+
+def test_can_export_token_when_not_present_already():
+    del os.environ["VAULT_TOKEN"]
+    with vault_dev.Server(export_token=True) as s:
+        assert os.environ["VAULT_TOKEN"] == s.token
+    assert "VAULT_TOKEN" not in os.environ

@@ -1,4 +1,5 @@
 import math
+import os
 import subprocess
 import time
 import uuid
@@ -6,17 +7,20 @@ import uuid
 import hvac
 
 from vault_dev.install import vault_path
-from vault_dev.utils import drop_envvar, find_free_port, read_all_lines
+from vault_dev.utils import find_free_port, read_all_lines, transient_envvar
 
 
 class Server:
-    def __init__(self, *, port=None, verbose=False, debug=False):
+    def __init__(self, *, port=None, verbose=False, debug=False,
+                 export_token=False):
         self.process = None
         self.verbose = verbose or debug
         self.vault = vault_path()
         self.port = port or find_free_port()
         self.token = str(uuid.uuid4())
         self.debug = debug
+        self.export_token = export_token
+        self._prev_token = None
 
     def start(self, timeout=5, poll=0.1):
         if self.is_running():
@@ -36,9 +40,19 @@ class Server:
         self.process = subprocess.Popen(args, stderr=output, stdout=output)
         self._wait_until_active(timeout, poll)
         self._enable_kv1()
+        if self.export_token:
+            if "VAULT_TOKEN" in os.environ:
+                self._prev_token = os.environ["VAULT_TOKEN"]
+            os.environ["VAULT_TOKEN"] = self.token
 
     def stop(self, *, wait=True):
         self._message("Stopping vault server")
+        if self.export_token:
+            if self._prev_token is None:
+                if "VAULT_TOKEN" in os.environ:
+                    del os.environ["VAULT_TOKEN"]
+            else:
+                os.environ["VAULT_TOKEN"] = self._prev_token
         if self.is_running():
             self.process.kill()
             if wait:
@@ -46,11 +60,10 @@ class Server:
 
     def client(self):
         # See https://github.com/hvac/hvac/issues/421
-        drop_envvar("VAULT_ADDR")
-        drop_envvar("VAULT_TOKEN")
-        cl = hvac.Client(url=self.url(), token=self.token)
-        assert cl.is_authenticated()  # noqa S101
-        return cl
+        with transient_envvar(VAULT_ADDR=None, VAULT_TOKEN=None):
+            client = hvac.Client(url=self.url(), token=self.token)
+        assert client.is_authenticated()  # noqa S101
+        return client
 
     def url(self):
         return f"http://localhost:{self.port}"
@@ -75,11 +88,11 @@ class Server:
                 msg = "Vault process has terminated"
                 raise VaultDevServerError(msg, self.process)
             try:
-                cl = self.client()
-                if cl.sys.is_initialized():
+                client = self.client()
+                if client.sys.is_initialized():
                     self._message("\nConnection made")
                     return
-            except:  # noqa 82
+            except Exception as e:  # noqa 82
                 self._message(".", end="", flush=True)
                 time.sleep(poll)
         msg = "Vault did not start in time"
