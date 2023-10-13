@@ -1,4 +1,3 @@
-import gc
 import socket
 
 import pytest
