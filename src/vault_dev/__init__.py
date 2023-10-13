@@ -5,7 +5,7 @@ from vault_dev.server import Server, VaultDevServerError
 
 
 @deprecated("Please use 'Server', not 'server'")
-class server(Server):
+class server(Server):  # noqa N801
     pass
 
 
