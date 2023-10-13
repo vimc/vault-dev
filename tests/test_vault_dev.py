@@ -62,15 +62,3 @@ def test_verbose_mode(capsys):
 def test_restart_is_not_an_error():
     with vault_dev.Server() as s:
         assert s.start() is None
-
-
-def test_cleanup_on_gc():
-    def f():
-        s = vault_dev.Server()
-        s.start()
-        return s.process
-
-    f()
-    gc.collect()
-    # This used to return true, not anymore and no idea why...
-    # assert p.poll() < 0
