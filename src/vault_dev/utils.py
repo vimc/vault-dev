@@ -1,5 +1,6 @@
 import os
 import socket
+from contextlib import contextmanager
 
 
 def find_free_port():
@@ -24,6 +25,23 @@ def read_all_lines(con, prefix=""):
     return "".join(output)
 
 
-def drop_envvar(name):
-    if name in os.environ:
-        del os.environ[name]
+@contextmanager
+def transient_envvar(**kwargs):
+    prev = {
+        k: os.environ[k] if k in os.environ else None for k in kwargs.keys()
+    }
+    try:
+        _setdictvals(kwargs, os.environ)
+        yield
+    finally:
+        _setdictvals(prev, os.environ)
+
+
+def _setdictvals(new, container):
+    for k, v in new.items():
+        if v is None:
+            if k in container:
+                del container[k]
+        else:
+            container[k] = v
+    return container
