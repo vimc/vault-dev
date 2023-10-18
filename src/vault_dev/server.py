@@ -11,8 +11,9 @@ from vault_dev.utils import find_free_port, read_all_lines, transient_envvar
 
 
 class Server:
-    def __init__(self, *, port=None, verbose=False, debug=False,
-                 export_token=False):
+    def __init__(
+        self, *, port=None, verbose=False, debug=False, export_token=False
+    ):
         self.process = None
         self.verbose = verbose or debug
         self.vault = vault_path()
