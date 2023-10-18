@@ -75,7 +75,8 @@ def test_can_export_token_when_present():
 
 
 def test_can_export_token_when_not_present_already():
-    del os.environ["VAULT_TOKEN"]
+    if "VAULT_TOKEN" in os.environ:
+        del os.environ["VAULT_TOKEN"]
     with vault_dev.Server(export_token=True) as s:
         assert os.environ["VAULT_TOKEN"] == s.token
     assert "VAULT_TOKEN" not in os.environ
