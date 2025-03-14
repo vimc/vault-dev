@@ -7,23 +7,29 @@ import uuid
 import hvac
 
 from vault_dev.install import vault_path
-from vault_dev.utils import find_free_port, read_all_lines, transient_envvar
+from vault_dev.utils import find_free_port, read_all_lines, transient_envvars
 
 
 class Server:
+    process: subprocess.Popen | None = None
+    _prev_token: str | None = None
+
     def __init__(
-        self, *, port=None, verbose=False, debug=False, export_token=False
+        self,
+        *,
+        port: int | None = None,
+        verbose: bool = False,
+        debug: bool = False,
+        export_token: bool = False,
     ):
-        self.process = None
         self.verbose = verbose or debug
         self.vault = vault_path()
         self.port = port or find_free_port()
         self.token = str(uuid.uuid4())
         self.debug = debug
         self.export_token = export_token
-        self._prev_token = None
 
-    def start(self, timeout=5, poll=0.1):
+    def start(self, timeout: float = 5, poll: float = 0.1) -> None:
         if self.is_running():
             self._message("Vault server already started")
             return
@@ -46,7 +52,7 @@ class Server:
                 self._prev_token = os.environ["VAULT_TOKEN"]
             os.environ["VAULT_TOKEN"] = self.token
 
-    def stop(self, *, wait=True):
+    def stop(self, *, wait: bool = True) -> None:
         self._message("Stopping vault server")
         if self.export_token:
             if self._prev_token is None:
@@ -54,35 +60,35 @@ class Server:
                     del os.environ["VAULT_TOKEN"]
             else:
                 os.environ["VAULT_TOKEN"] = self._prev_token
-        if self.is_running():
+        if self.process and not self.process.poll():
             self.process.kill()
             if wait:
                 self.process.wait()
 
-    def client(self):
+    def client(self) -> hvac.Client:
         # See https://github.com/hvac/hvac/issues/421
-        with transient_envvar(VAULT_ADDR=None, VAULT_TOKEN=None):
+        with transient_envvars({"VAULT_ADDR": None, "VAULT_TOKEN": None}):
             client = hvac.Client(url=self.url(), token=self.token)
         assert client.is_authenticated()  # noqa S101
         return client
 
-    def url(self):
+    def url(self) -> str:
         return f"http://localhost:{self.port}"
 
-    def __enter__(self):
+    def __enter__(self) -> "Server":
         self.start()
         return self
 
-    def __exit__(self, ex_type, ex_value, traceback):
+    def __exit__(self, ex_type, ex_value, traceback) -> None:
         self.stop()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.stop(wait=False)
 
     def is_running(self):
         return self.process and not self.process.poll()
 
-    def _wait_until_active(self, timeout, poll):
+    def _wait_until_active(self, timeout: float, poll: float) -> None:
         self._message("Waiting for server to become active")
         for _i in range(math.ceil(timeout / poll)):
             if not self.is_running():
@@ -99,7 +105,7 @@ class Server:
         msg = "Vault did not start in time"
         raise VaultDevServerError(msg, self.process)
 
-    def _enable_kv1(self):
+    def _enable_kv1(self) -> None:
         self._message("Configuring old-style kv engine at /secret")
         cl = self.client()
         cl.sys.disable_secrets_engine(path="secret")
@@ -107,7 +113,7 @@ class Server:
             backend_type="kv", path="secret", options={"version": 1}
         )
 
-    def _message(self, txt, **kwargs):
+    def _message(self, txt: str, **kwargs) -> None:
         if self.verbose:
             print(txt, **kwargs)
 

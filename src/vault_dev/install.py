@@ -18,36 +18,36 @@ import zipfile
 import requests
 
 
-def ensure_installed():
+def ensure_installed() -> None:
     if not shutil.which("vault"):
         print("Did not find system vault, installing one for tests")
         global_vault_dev_exe.install()
 
 
-def vault_path():
+def vault_path() -> str:
     vault = shutil.which("vault")
     if not vault:
         vault = global_vault_dev_exe.vault()
     return vault
 
 
-def vault_exe_filename(platform):
+def vault_exe_filename(platform: str) -> str:
     if platform == "windows":
         return "vault.exe"
     else:
         return "vault"
 
 
-def vault_url(version, platform, arch="amd64"):
-    fmt = "https://releases.hashicorp.com/vault/{}/vault_{}_{}_{}.zip"
-    return fmt.format(version, version, platform, arch)
+def vault_url(version: str, platform: str, arch: str = "amd64") -> str:
+    base = "https://releases.hashicorp.com/vault"
+    return f"{base}/{version}/vault_{version}_{platform}_{arch}.zip"
 
 
-def vault_platform():
+def vault_platform() -> str:
     return platform.system().lower()
 
 
-def vault_download(dest, version, platform):
+def vault_download(dest: str, version: str, platform: str) -> str:
     dest_bin = f"{dest}/{vault_exe_filename(platform)}"
     if not os.path.exists(dest_bin):
         print(f"installing vault to '{dest}'")
@@ -63,8 +63,8 @@ def vault_download(dest, version, platform):
 
 
 class VaultDevExe:
-    path = None
-    exe = None
+    path: str | None = None
+    exe: str | None = None
 
     def __init__(self):
         if not self.path:
@@ -73,13 +73,13 @@ class VaultDevExe:
             self.path = tmp
             self.exe = f"{tmp.name}/{exe}"
 
-    def install(self):
+    def install(self) -> str:
         return vault_download(self.path.name, "1.0.0", vault_platform())
 
-    def exists(self):
+    def exists(self) -> bool:
         return self.exe and os.path.exists(self.exe)
 
-    def vault(self):
+    def vault(self) -> str:
         if self.exists():
             return self.exe
         else:
