@@ -9,4 +9,4 @@ class server(Server):  # noqa N801
     pass
 
 
-__all__ = ["Server", "VaultDevServerError", "server", "ensure_installed"]
+__all__ = ["Server", "VaultDevServerError", "ensure_installed", "server"]
