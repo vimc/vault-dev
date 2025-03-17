@@ -41,6 +41,7 @@ path = "src/vault_dev/__about__.py"
 dependencies = [
   "pytest",
   "pytest-cov",
+  "pytest-explicit",
   "pytest-mock",
   "coverage[toml]>=6.5",
 ]
@@ -170,4 +171,15 @@ exclude_lines = [
   "no cov",
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
+]
+
+
+[tool.pytest.ini_options]
+markers = [
+   "slow: slower integration tests",
+   "internet: tests that require internet",
+]
+explicit-only = [
+    "internet",
+    "slow",
 ]

@@ -35,7 +35,7 @@ class Server:
             return
         self._message(f"Starting vault server on port {self.port}")
         args = [
-            self.vault,
+            str(self.vault),
             "server",
             "-dev",
             "-dev-listen-address",
